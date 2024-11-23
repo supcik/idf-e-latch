@@ -1,0 +1,9 @@
+version: 1.0.0
+description: electric latch component for ESP-IDF
+maintainers:
+  - Jacques Supcik <jacques@supcik.net>
+url: https://github.com/supcik/idf-e-latch/tree/main/e_latch
+repository: https://github.com/supcik/idf-e-latch.git
+license: MIT
+dependencies:
+  idf: ">=5.3"

@@ -57,11 +57,11 @@ class Elatch {
 class GpioElatch : public Elatch {
    public:
     GpioElatch(gpio_num_t actuator_pin, gpio_num_t sensor_pin);
+    bool isClosed() override;
 
    protected:
     void Pull() override;
     void Release() override;
-    bool isClosed() override;
 
    private:
     gpio_num_t actuator_pin_;

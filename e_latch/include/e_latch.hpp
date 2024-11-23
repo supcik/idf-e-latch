@@ -27,7 +27,7 @@ class Elatch {
     virtual ~Elatch();
 
     void Lock();
-    void Unlock();
+    void Unlock(uint16_t pulse_duration_ms = 100, uint16_t rest_duration_ms = 1000);
 
    protected:
     virtual void Pull() = 0;
@@ -35,12 +35,18 @@ class Elatch {
     virtual bool isClosed() { return false; };
 
    private:
+    struct ElatchMessage {
+        uint16_t pulse_duration_ms;
+        uint16_t rest_duration_ms;
+    };
+
     bool has_sensor_;
     bool locked_ = true;
+
     QueueHandle_t queue_;
     TaskHandle_t task_handle_;
 
-    void Pulse(uint32_t duration_ms);
+    void Pulse(uint16_t duration_ms);
     void Task();
     static void TaskForwarder(void* param) {
         Elatch* latch = (Elatch*)param;

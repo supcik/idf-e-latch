@@ -25,9 +25,10 @@
 #include "freertos/queue.h"
 #include "freertos/task.h"
 
+static const char* kTag = "Elatch";
+
 static const uint32_t kStackSize = 4096;
-static const uint32_t kPulseTime = 100;
-static const uint32_t kRestTime = 1000;
+static const uint32_t kTaskPollingInterval = 100;
 
 Elatch::Elatch(bool has_sensor) : has_sensor_(has_sensor) {
     Lock();
@@ -39,15 +40,15 @@ Elatch::Elatch(bool has_sensor) : has_sensor_(has_sensor) {
 }
 
 void Elatch::Lock() { locked_ = true; }
-void Elatch::Unlock() {
+void Elatch::Unlock(uint16_t pulse_duration_ms, uint16_t rest_duration_ms) {
     locked_ = false;
-    uint32_t message = 0;
+    ElatchMessage message = {pulse_duration_ms, rest_duration_ms};
     xQueueSend(queue_, &message, 0);
 }
 
 Elatch::~Elatch() { vTaskDelete(task_handle_); }
 
-void Elatch::Pulse(uint32_t duration_ms) {
+void Elatch::Pulse(uint16_t duration_ms) {
     Pull();
     int64_t t0 = esp_timer_get_time();
     while (1) {
@@ -65,13 +66,25 @@ void Elatch::Pulse(uint32_t duration_ms) {
 }
 
 void Elatch::Task() {
-    uint32_t message;
+    ElatchMessage message;
+    uint16_t pulse_duration_ms = 0;
+    uint16_t rest_duration_ms = 0;
+
     while (1) {
-        BaseType_t res = xQueueReceive(queue_, &message, pdMS_TO_TICKS(100));
-        if (res == pdPASS || !locked_) {
-            Pulse(kPulseTime);
-            vTaskDelay(pdMS_TO_TICKS(kRestTime));
+        BaseType_t res = xQueueReceive(queue_, &message, pdMS_TO_TICKS(kTaskPollingInterval));
+        if (res != pdPASS && locked_) {
+            continue;
         }
+        if (res == pdPASS) {
+            pulse_duration_ms = message.pulse_duration_ms;
+            rest_duration_ms = message.rest_duration_ms;
+        }
+        if (pulse_duration_ms <= 0) {
+            ESP_LOGW(kTag, "Invalid pulse duration");
+        }
+
+        Pulse(pulse_duration_ms);
+        vTaskDelay(pdMS_TO_TICKS(rest_duration_ms));
     }
 }
 

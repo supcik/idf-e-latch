@@ -28,11 +28,11 @@ class Elatch {
 
     void Lock();
     void Unlock(uint16_t pulse_duration_ms = 100, uint16_t rest_duration_ms = 1000);
+    virtual bool isClosed() { return false; };
 
    protected:
     virtual void Pull() = 0;
     virtual void Release() = 0;
-    virtual bool isClosed() { return false; };
 
    private:
     struct ElatchMessage {

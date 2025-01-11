@@ -29,7 +29,7 @@ void app_main(void);
 static const char* kTag = "app";
 
 static const gpio_num_t kActuatorPin = GPIO_NUM_14;
-static const gpio_num_t kSensorPin = GPIO_NUM_16;
+static const gpio_num_t kSensorPin = GPIO_NUM_21;
 
 void app_main(void) {
     ESP_LOGI(kTag, "Starting App");
@@ -47,6 +47,6 @@ void app_main(void) {
         ESP_LOGI(kTag, "Unlocking");
         led->On(kGreen);
         latch.Unlock();
-        vTaskDelay(pdMS_TO_TICKS(5000));
+        vTaskDelay(pdMS_TO_TICKS(30000));
     }
 }

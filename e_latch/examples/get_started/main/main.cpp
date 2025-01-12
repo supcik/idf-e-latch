@@ -34,18 +34,19 @@ static const gpio_num_t kSensorPin = GPIO_NUM_21;
 void app_main(void) {
     ESP_LOGI(kTag, "Starting App");
 
-    status_led::LedDevice* led_device = new status_led::Ws2812Led(47, true);
+    status_led::LedDevice* led_device =
+        new status_led::Ws2812Led(47, LED_STRIP_COLOR_COMPONENT_FMT_RGB);
     StatusLed* led = new StatusLed(led_device);
 
     GpioElatch latch(kActuatorPin, kSensorPin);
 
     while (true) {
         ESP_LOGI(kTag, "Locking");
-        led->On(kRed);
+        led->On(StatusLed::kRed);
         latch.Lock();
         vTaskDelay(pdMS_TO_TICKS(5000));
         ESP_LOGI(kTag, "Unlocking");
-        led->On(kGreen);
+        led->On(StatusLed::kGreen);
         latch.Unlock();
         vTaskDelay(pdMS_TO_TICKS(30000));
     }

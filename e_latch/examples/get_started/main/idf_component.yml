@@ -1,4 +1,4 @@
 dependencies:
   e_latch:
     override_path: "../../../"
-  supcik/status_led: "*"
+  supcik/status_led: "^2.0.0"

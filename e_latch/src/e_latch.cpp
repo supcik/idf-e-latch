@@ -87,8 +87,12 @@ void Elatch::Task() {
             need_pulse = want_to_open;
         }
 
-        if (has_sensor_ && isClosed() && want_to_open) {
-            need_pulse = true;
+        if (has_sensor_ && want_to_open) {
+            if (isClosed()) {
+                need_pulse = true;
+            } else {  // already open, skip pulse
+                need_pulse = false;
+            }
         }
 
         int64_t now = esp_timer_get_time() / 1000;

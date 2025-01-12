@@ -31,7 +31,10 @@ static const uint32_t kStackSize = 4096;
 static const uint32_t kTaskPollingInterval = 100;
 static const int queue_size = 10;
 
-Elatch::Elatch(bool has_sensor) : has_sensor_(has_sensor) {
+Elatch::Elatch(bool has_sensor, int32_t pulse_duration_ms, int32_t rest_duration_ms)
+    : has_sensor_(has_sensor),
+      pulse_duration_ms_(pulse_duration_ms),
+      rest_duration_ms_(rest_duration_ms) {
     queue_ = xQueueCreate(queue_size, sizeof(ElatchMessage));
     BaseType_t res = xTaskCreate(
         TaskForwarder, "trigger_task", kStackSize, this, uxTaskPriorityGet(nullptr), &task_handle_);
@@ -40,12 +43,12 @@ Elatch::Elatch(bool has_sensor) : has_sensor_(has_sensor) {
 }
 
 void Elatch::Lock() {
-    ElatchMessage message = {0, 0};
+    ElatchMessage message = {want_to_open : false};
     xQueueSend(queue_, &message, portMAX_DELAY);
 }
 
-void Elatch::Unlock(uint16_t pulse_duration_ms, uint16_t rest_duration_ms) {
-    ElatchMessage message = {pulse_duration_ms, rest_duration_ms};
+void Elatch::Unlock() {
+    ElatchMessage message = {want_to_open : true};
     xQueueSend(queue_, &message, portMAX_DELAY);
 }
 
@@ -70,8 +73,6 @@ void Elatch::Pulse(uint16_t duration_ms) {
 
 void Elatch::Task() {
     ElatchMessage message;
-    uint16_t pulse_duration_ms = 0;
-    uint16_t rest_duration_ms = 0;
 
     int64_t last_pulse = 0;
     bool need_pulse = false;
@@ -81,9 +82,7 @@ void Elatch::Task() {
         BaseType_t res = xQueueReceive(queue_, &message, pdMS_TO_TICKS(kTaskPollingInterval));
 
         if (res == pdPASS) {
-            pulse_duration_ms = message.pulse_duration_ms;
-            rest_duration_ms = message.rest_duration_ms;
-            want_to_open = pulse_duration_ms > 0;
+            want_to_open = message.want_to_open;
             need_pulse = want_to_open;
         }
 
@@ -97,20 +96,25 @@ void Elatch::Task() {
 
         int64_t now = esp_timer_get_time() / 1000;
 
-        if (need_pulse && (now - last_pulse > rest_duration_ms)) {
+        if (need_pulse && (now - last_pulse > rest_duration_ms_)) {
             ESP_LOGI(kTag,
-                     "Pulse %" PRIu16 " ms, rest %" PRIu16 " ms",
-                     pulse_duration_ms,
-                     rest_duration_ms);
-            Pulse(pulse_duration_ms);
+                     "Pulse %" PRId32 " ms, rest %" PRId32 " ms",
+                     pulse_duration_ms_,
+                     rest_duration_ms_);
+            Pulse(pulse_duration_ms_);
             need_pulse = false;
             last_pulse = now;
         }
     }
 }
 
-GpioElatch::GpioElatch(gpio_num_t actuator_pin, gpio_num_t sensor_pin)
-    : Elatch(sensor_pin >= 0), actuator_pin_(actuator_pin), sensor_pin_(sensor_pin) {
+GpioElatch::GpioElatch(gpio_num_t actuator_pin,
+                       gpio_num_t sensor_pin,
+                       int32_t pulse_duration_ms,
+                       int32_t rest_duration_ms)
+    : Elatch(sensor_pin >= 0, pulse_duration_ms, rest_duration_ms),
+      actuator_pin_(actuator_pin),
+      sensor_pin_(sensor_pin) {
     gpio_set_level(actuator_pin_, 0);
     gpio_config_t io_conf = {};
     io_conf.intr_type = GPIO_INTR_DISABLE;

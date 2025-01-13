@@ -58,7 +58,7 @@ void Elatch::Pulse(uint16_t duration_ms) {
     Pull();
     int64_t t0 = esp_timer_get_time() / 1000;
     while (1) {
-        if (!isClosed()) {
+        if (has_sensor_ && !isClosed()) {
             break;
         }
         int64_t t1 = esp_timer_get_time() / 1000;

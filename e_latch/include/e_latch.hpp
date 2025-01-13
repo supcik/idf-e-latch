@@ -23,7 +23,7 @@
 
 class Elatch {
    public:
-    Elatch(bool has_sensor, int32_t pulse_duration_ms = 100, int32_t rest_duration_ms = 5000);
+    Elatch(bool has_sensor, int32_t pulse_duration_ms = 500, int32_t rest_duration_ms = 5000);
     virtual ~Elatch();
 
     void Lock();

@@ -23,7 +23,7 @@ jobs:
     strategy:
       matrix:
         target: [esp32s3]
-        esp_idf_version: [v5.3.1]
+        esp_idf_version: [v5.5.0]
         path: ['e_latch/examples/get_started']
 
     steps:

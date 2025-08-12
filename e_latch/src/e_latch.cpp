@@ -110,12 +110,16 @@ void Elatch::Task() {
 
 GpioElatch::GpioElatch(gpio_num_t actuator_pin,
                        gpio_num_t sensor_pin,
+                       bool inverted_actuator_logic,
+                       bool inverted_sensor_logic,
                        int32_t pulse_duration_ms,
                        int32_t rest_duration_ms)
     : Elatch(sensor_pin >= 0, pulse_duration_ms, rest_duration_ms),
       actuator_pin_(actuator_pin),
-      sensor_pin_(sensor_pin) {
-    gpio_set_level(actuator_pin_, 0);
+      sensor_pin_(sensor_pin),
+      inverted_actuator_logic_(inverted_actuator_logic),
+      inverted_sensor_logic_(inverted_sensor_logic) {
+    Release();
     gpio_config_t io_conf = {};
     io_conf.intr_type = GPIO_INTR_DISABLE;
     io_conf.mode = GPIO_MODE_OUTPUT;
@@ -132,6 +136,8 @@ GpioElatch::GpioElatch(gpio_num_t actuator_pin,
     }
 }
 
-void GpioElatch::Pull() { gpio_set_level(actuator_pin_, 1); }
-void GpioElatch::Release() { gpio_set_level(actuator_pin_, 0); }
-bool GpioElatch::isClosed() { return gpio_get_level(sensor_pin_) == 0; }
+void GpioElatch::Pull() { gpio_set_level(actuator_pin_, inverted_actuator_logic_ ? 0 : 1); }
+void GpioElatch::Release() { gpio_set_level(actuator_pin_, inverted_actuator_logic_ ? 1 : 0); }
+bool GpioElatch::isClosed() {
+    return gpio_get_level(sensor_pin_) == inverted_sensor_logic_ ? 1 : 0;
+}

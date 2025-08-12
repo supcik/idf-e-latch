@@ -58,6 +58,8 @@ class GpioElatch : public Elatch {
    public:
     GpioElatch(gpio_num_t actuator_pin,
                gpio_num_t sensor_pin,
+               bool inverted_actuator_logic = false,
+               bool inverted_sensor_logic = false,
                int32_t pulse_duration_ms = 500,
                int32_t rest_duration_ms = 5000);
     bool isClosed() override;
@@ -69,4 +71,6 @@ class GpioElatch : public Elatch {
    private:
     gpio_num_t actuator_pin_;
     gpio_num_t sensor_pin_;
+    bool inverted_actuator_logic_;
+    bool inverted_sensor_logic_;
 };
